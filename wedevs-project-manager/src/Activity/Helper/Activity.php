@@ -1,20 +1,11 @@
 <?php
 namespace WeDevs\PM\Activity\Helper;
 
-
 use WP_REST_Request;
-// data: {
-// 	with: '',
-// 	per_page: '10',
-// 	select: 'id, title',
-// 	id: [1,2],
-// 	title: 'Rocket', 'test'
-// 	page: 1,
-//  orderby: [title=>'asc', 'id'=>desc] OR created_at|ASC,id|DESC
-//  activity_meta: 'total_task_activities,total_tasks,total_complete_tasks,total_incomplete_tasks,total_activities,total_activities,total_comments,total_files,total_activities'
-// },
 
 class Activity {
+	public $tb_project;
+	public $tb_activity;
 	private static $_instance;
 	private $query_params;
 	private $select;
@@ -27,22 +18,22 @@ class Activity {
 	private $activity_ids;
 	private $is_single_query = false;
 
-	public static function getInstance() {
-        return new self();
+	public static function getInstance(): self {
+        return new static();
     }
 
     function __construct() {
     	$this->set_table_name();
     }
 
-    public static function get_activities( WP_REST_Request $request ) {
-		$activities = self::get_results( $request->get_params() );
+    public static function get_activities( WP_REST_Request $request ): void {
+		$activities = static::get_results( $request->get_params() );
 
 		wp_send_json( $activities );
 	}
 
-	public static function get_results( $params = [] ) {
-		$self = self::getInstance();
+	public static function get_results( array $params = [] ): array {
+		$self = static::getInstance();
 		$self->query_params = $params;
 
 		$self->join()
@@ -69,7 +60,7 @@ class Activity {
 	 *
 	 * @return array
 	 */
-	public function format_activities( $activities ) {
+	public function format_activities( array $activities ): array {
 		$response = [
 			'data' => [],
 			'meta' => []
@@ -88,7 +79,7 @@ class Activity {
 	/**
 	 * Set meta data
 	 */
-	private function set_activities_meta() {
+	private function set_activities_meta(): array {
 		return [
 			'pagination' => [
 				'total'   => $this->found_rows,
@@ -97,7 +88,7 @@ class Activity {
 		];
 	}
 
-	public function fromat_activity( $activity ) {
+	public function fromat_activity( $activity ): array {
 
 		$meta = $this->parse_meta( $activity );
 
@@ -118,7 +109,7 @@ class Activity {
 		return apply_filters( 'pm_activity_transform', $items, $activity );
 	}
 
-	private function item_with( $items, $activity ) {
+	private function item_with( array $items, $activity ): array {
         $with = empty( $this->query_params['with'] ) ? [] : $this->query_params['with'];
 
         if ( ! is_array( $with ) ) {
@@ -134,7 +125,7 @@ class Activity {
         return $items;
     }
 
-    private function parse_meta( $activity ) {
+    private function parse_meta( $activity ): array {
         $parsed_meta = [];
 
         switch ( $activity->resource_type ) {
@@ -170,38 +161,38 @@ class Activity {
         return $parsed_meta;
     }
 
-    private function parse_meta_for_task( $activity ) {
-        return is_serialized( $activity->meta ) ? maybe_unserialize( $activity->meta ) : $activity->meta;
+    private function parse_meta_for_task( $activity ): array {
+        return is_serialized_string( $activity->meta ) ? maybe_unserialize( $activity->meta ) : $activity->meta;
     }
 
-    private function parse_meta_for_task_list( $activity ) {
-        return is_serialized( $activity->meta ) ? maybe_unserialize( $activity->meta ) : $activity->meta;
+    private function parse_meta_for_task_list( $activity ): array {
+        return is_serialized_string( $activity->meta ) ? maybe_unserialize( $activity->meta ) : $activity->meta;
     }
 
-    private function parse_meta_for_discussion_board( $activity ) {
-        return is_serialized( $activity->meta ) ? maybe_unserialize( $activity->meta ) : $activity->meta;
+    private function parse_meta_for_discussion_board( $activity ): array {
+        return is_serialized_string( $activity->meta ) ? maybe_unserialize( $activity->meta ) : $activity->meta;
     }
 
-    private function parse_meta_for_milestone( $activity ) {
-        return is_serialized( $activity->meta ) ? maybe_unserialize( $activity->meta ) : $activity->meta;
+    private function parse_meta_for_milestone( $activity ): array {
+        return is_serialized_string( $activity->meta ) ? maybe_unserialize( $activity->meta ) : $activity->meta;
     }
 
-    private function parse_meta_for_project( $activity ) {
-        return is_serialized( $activity->meta ) ? maybe_unserialize( $activity->meta ) : $activity->meta;
+    private function parse_meta_for_project( $activity ): array {
+        return is_serialized_string( $activity->meta ) ? maybe_unserialize( $activity->meta ) : $activity->meta;
     }
 
-    private function parse_meta_for_file( $activity ) {
-        return is_serialized( $activity->meta ) ? maybe_unserialize( $activity->meta ) : $activity->meta;
+    private function parse_meta_for_file( $activity ): array {
+        return is_serialized_string( $activity->meta ) ? maybe_unserialize( $activity->meta ) : $activity->meta;
     }
 
-    private function parse_meta_for_comment( $activity ) {
+    private function parse_meta_for_comment( $activity ): array {
         $meta = [];
 
         if ( ! is_array( $activity ) ) {
             return $meta;
         }
 
-        $activity->meta = is_serialized( $activity->meta ) ? maybe_unserialize( $activity->meta ) : $activity->meta;
+        $activity->meta = is_serialized_string( $activity->meta ) ? maybe_unserialize( $activity->meta ) : $activity->meta;
 
         foreach ($activity->meta as $key => $value) {
             if ( $key == 'commentable_type' && $value == 'file' ) {
@@ -223,7 +214,7 @@ class Activity {
     }
 
 
-	private function with() {
+	private function with(): self {
 		
 		$this->actor()
 			->project();
@@ -233,7 +224,7 @@ class Activity {
 		return $this;
 	}
 
-	private function project() {
+	private function project(): self {
 		if ( empty( $this->activities ) ) {
 			return $this;
 		}
@@ -259,7 +250,7 @@ class Activity {
 		return $this;
 	}
 
-	private function actor() {
+	private function actor(): self {
 		if ( empty( $this->activities ) ) {
 			return $this;
 		}
@@ -285,7 +276,7 @@ class Activity {
 		return $this;
 	}
 
-	private function updater() {
+	private function updater(): self {
 
         if ( empty( $this->activities ) ) {
 			return $this;
@@ -312,15 +303,15 @@ class Activity {
 		return $this;
 	}
 
-	private function meta() {
+	private function meta(): self {
 		return $this;
 	}
 
-	private function join() {
+	private function join(): self {
 		return $this;
 	}
 
-	private function where() {
+	private function where(): self {
 
 		$this->where_id()
 			->where_actor_id()
@@ -332,7 +323,7 @@ class Activity {
 		return $this;
 	}
 
-	private function where_updated_at() {
+	private function where_updated_at(): self {
 		global $wpdb;
 
 		$updated_at         = !empty( $this->query_params['updated_at'] ) ? $this->query_params['updated_at'] : false;
@@ -373,7 +364,7 @@ class Activity {
 		return $this;
 	}
 
-	private function get_operator( $param ) {
+	private function get_operator( string $param ): string {
 
 		$default = [
 			'equal'              => '=',
@@ -393,7 +384,7 @@ class Activity {
 	 *
 	 * @return class object
 	 */
-	private function where_resource_type() {
+	private function where_resource_type(): self {
 		global $wpdb;
 		$resource_type = isset( $this->query_params['resource_type'] ) ? $this->query_params['resource_type'] : false;
 
@@ -420,7 +411,7 @@ class Activity {
 	 *
 	 * @return class object
 	 */
-	private function where_id() {
+	private function where_id(): self {
 		global $wpdb;
 		$id = isset( $this->query_params['id'] ) ? $this->query_params['id'] : false;
 
@@ -442,7 +433,7 @@ class Activity {
 		return $this;
 	}
 
-	private function where_actor_id() {
+	private function where_actor_id(): self {
 		global $wpdb;
 		$actor_id = isset( $this->query_params['users'] ) ? $this->query_params['users'] : false;
 
@@ -469,7 +460,7 @@ class Activity {
 	 *
 	 * @return class object
 	 */
-	private function where_resource_id() {
+	private function where_resource_id(): self {
 		global $wpdb;
 		$resource_id = isset( $this->query_params['resource_id'] ) ? $this->query_params['resource_id'] : false;
 
@@ -491,7 +482,7 @@ class Activity {
 		return $this;
 	}
 
-	private function where_project_id() {
+	private function where_project_id(): self {
 		global $wpdb;
 		$project_id = isset( $this->query_params['project_id'] ) ? $this->query_params['project_id'] : false;
 
@@ -513,7 +504,7 @@ class Activity {
 		return $this;
 	}
 
-	private function limit() {
+	private function limit(): self {
 		global $wpdb;
 		$per_page = isset( $this->query_params['per_page'] ) ? $this->query_params['per_page'] : false;
 
@@ -527,7 +518,7 @@ class Activity {
 		return $this;
 	}
 
-	private function orderby() {
+	private function orderby(): self {
         global $wpdb;
 
 		$odr_prms = isset( $this->query_params['orderby'] ) ? $this->query_params['orderby'] : false;
@@ -564,7 +555,7 @@ class Activity {
         return $this;
     }
 
-	private function get_offset() {
+	private function get_offset(): int {
 		$page = isset( $this->query_params['page'] ) ? $this->query_params['page'] : false;
 
 		$page   = empty( $page ) ? 1 : absint( $page );
@@ -574,7 +565,7 @@ class Activity {
 		return $offset;
 	}
 
-	private function get_per_page() {
+	private function get_per_page(): int {
 
 		$per_page = isset( $this->query_params['per_page'] ) ? $this->query_params['per_page'] : false;
 
@@ -585,7 +576,7 @@ class Activity {
 		return 20;
 	}
 
-	private function get() {
+	private function get(): self {
 		global $wpdb;
 		$id = isset( $this->query_params['id'] ) ? $this->query_params['id'] : false;
 
@@ -611,7 +602,7 @@ class Activity {
 		return $this;
 	}
 
-	private function set_table_name() {
+	private function set_table_name(): void {
 		$this->tb_project  = pm_tb_prefix() . 'pm_projects';
 		$this->tb_activity = pm_tb_prefix() . 'pm_activities';
 	}

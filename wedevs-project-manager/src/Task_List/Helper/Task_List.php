@@ -6,16 +6,6 @@ use WeDevs\PM\task\Helper\Task;
 use WeDevs\PM\Comment\Helper\Comment;
 use WeDevs\PM\File\Helper\File;
 use WP_REST_Request;
-// data: {
-// 	with: '',
-// 	per_page: '10',
-// 	select: 'id, title',
-// 	id: [1,2],
-// 	title: 'Rocket', 'test'
-// 	page: 1,
-//  orderby: [title=>'asc', 'id'=>desc]
-//  list_meta: 'total_task_lists,total_tasks,total_complete_tasks,total_incomplete_tasks,total_$this->list_ids,total_milestones,total_comments,total_files,total_activities'
-// },
 
 class Task_List {
 	private static $_instance;
@@ -30,22 +20,22 @@ class Task_List {
 	private $list_ids;
 	private $is_single_query = false;
 
-	public static function getInstance() {
-        return new self();
+	public static function getInstance(): self {
+        return new static();
     }
 
     function __construct() {
     	$this->set_table_name();
     }
 
-    public static function get_task_lists( WP_REST_Request $request ) {
-		$lists = self::get_results( $request->get_params() );
+    public static function get_task_lists( WP_REST_Request $request ): void {
+		$lists = static::get_results( $request->get_params() );
 
 		wp_send_json( $lists );
 	}
 
-	public static function get_results( $params ) {
-		$self = self::getInstance();
+	public static function get_results( array $params ): array {
+		$self = static::getInstance();
 		$self->query_params = $params;
 
 		$self->join()
@@ -72,7 +62,7 @@ class Task_List {
 	 *
 	 * @return array
 	 */
-	public function format_tasklists( $tasklists ) {
+	public function format_tasklists( array $tasklists ): array {
 		$response = [
 			'data' => [],
 			'meta' => []
@@ -91,7 +81,7 @@ class Task_List {
 	/**
 	 * Set meta data
 	 */
-	private function set_tasklist_meta() {
+	private function set_tasklist_meta(): array {
 		return [
 			'pagination' => [
 				'total'    => $this->found_rows,
@@ -100,7 +90,7 @@ class Task_List {
 		];
 	}
 
-	public function fromat_tasklist( $tasklist ) {
+	public function fromat_tasklist( $tasklist ): array {
 		$items = [
 			'id'          => (int) $tasklist->id,
 			'title'       => isset( $tasklist->title ) ? (string) $tasklist->title : null,
@@ -118,7 +108,7 @@ class Task_List {
 		return $items;
 	}
 
-	private function item_with( $items, $tasklist ) {
+	private function item_with( array $items, $tasklist ): array {
 		$with = empty( $this->query_params['with'] ) ? [] : $this->query_params['with'];
 
 		if ( ! is_array( $with ) ) {
@@ -134,7 +124,7 @@ class Task_List {
 		return $items;
 	}
 
-	private function with() {
+	private function with(): self {
 		$this->milestone()
 			->complete_tasks()
 			->incomplete_tasks()
@@ -148,7 +138,7 @@ class Task_List {
 		return $this;
 	}
 
-	private function comments() {
+	private function comments(): self {
 		global $wpdb;
 
 		if ( empty( $this->list_ids ) ) {
@@ -207,7 +197,7 @@ class Task_List {
         return $this;
 	}
 
-	private function files() {
+	private function files(): self {
 		global $wpdb;
 
 		if ( empty( $this->list_ids ) ) {
@@ -266,7 +256,7 @@ class Task_List {
         return $this;
 	}
 
-	private function complete_tasks() {
+	private function complete_tasks(): self {
 		global $wpdb;
 
 		if ( empty( $this->list_ids ) ) {
@@ -330,7 +320,7 @@ class Task_List {
         return $this;
 	}
 
-	private function incomplete_tasks() {
+	private function incomplete_tasks(): self {
 		global $wpdb;
 
 		if ( empty( $this->list_ids ) ) {
@@ -394,7 +384,7 @@ class Task_List {
         return $this;
 	}
 
-	private function milestone() {
+	private function milestone(): self {
 		global $wpdb;
 
 		if ( empty( $this->list_ids ) ) {
@@ -450,7 +440,7 @@ class Task_List {
         return $this;
 	}
 
-	private function creator() {
+	private function creator(): self {
 		if ( empty( $this->list_ids ) ) {
 			return $this;
 		}
@@ -476,7 +466,7 @@ class Task_List {
 		return $this;
 	}
 
-	private function updater() {
+	private function updater(): self {
 
         if ( empty( $this->list_ids ) ) {
 			return $this;
@@ -503,7 +493,7 @@ class Task_List {
 		return $this;
 	}
 
-	private function meta() {
+	private function meta(): self {
 		
 			$this->get_meta_tb_data()
 				->total_tasks_count()
@@ -515,7 +505,7 @@ class Task_List {
 		return $this;
 	}
 
-	private function get_meta_tb_data() {
+	private function get_meta_tb_data(): self {
 		if ( empty( $this->list_ids ) ) {
 			return $this;
 		}
@@ -552,7 +542,7 @@ class Task_List {
         return $this;
     }
 
-	private function total_tasks_count() {
+	private function total_tasks_count(): self {
 		global $wpdb;
 		$metas           = [];
 		$tb_tasks        = pm_tb_prefix() . 'pm_tasks';
@@ -586,7 +576,7 @@ class Task_List {
 		return $this;
 	}
 
-	private function  total_complete_tasks_count() {
+	private function  total_complete_tasks_count(): self {
 		global $wpdb;
 		$metas           = [];
 		$tb_tasks        = pm_tb_prefix() . 'pm_tasks';
@@ -620,7 +610,7 @@ class Task_List {
 		return $this;
 	}
 
-	private function total_incomplete_tasks_count() {
+	private function total_incomplete_tasks_count(): self {
 		global $wpdb;
 		$metas           = [];
 		$tb_tasks        = pm_tb_prefix() . 'pm_tasks';
@@ -654,7 +644,7 @@ class Task_List {
 		return $this;
 	}
 
-	private function total_comments_count() {
+	private function total_comments_count(): self {
 		global $wpdb;
 		$metas           = [];
 		$tb_pm_comments  = pm_tb_prefix() . 'pm_comments';
@@ -687,7 +677,7 @@ class Task_List {
 		return $this;
 	}
 
-	private function total_assignees_count() {
+	private function total_assignees_count(): self {
 		global $wpdb;
 		$metas           = [];
 		$tb_users       = $wpdb->base_prefix . 'users';
@@ -757,7 +747,7 @@ class Task_List {
 		return substr( $select, 0, -1 );
 	}
 
-	private function select() {
+	private function select(): self {
 		$select = '';
 
 		if ( empty( $this->query_params['select'] ) ) {
@@ -783,11 +773,11 @@ class Task_List {
 		return $this;
 	}
 
-	private function join() {
+	private function join(): self {
 		return $this;
 	}
 
-	private function where() {
+	private function where(): self {
 		$this->where_id()
 			->where_project_id()
 			->where_task_id()
@@ -801,7 +791,7 @@ class Task_List {
 	 *
 	 * @return class object
 	 */
-	private function where_id() {
+	private function where_id(): self {
 
 		$id = isset( $this->query_params['id'] ) ? $this->query_params['id'] : false; 
 
@@ -827,7 +817,7 @@ class Task_List {
 	 *
 	 * @return class object
 	 */
-	private function where_title() {
+	private function where_title(): self {
 		global $wpdb;
 		$title = isset( $this->query_params['title'] ) ? $this->query_params['title'] : false;
 
@@ -841,7 +831,7 @@ class Task_List {
 		return $this;
 	}
 
-	private function where_project_id() {
+	private function where_project_id(): self {
 		global $wpdb;
 		$id = isset( $this->query_params['project_id'] ) ? $this->query_params['project_id'] : false;
 
@@ -864,7 +854,7 @@ class Task_List {
 		return $this;
 	}
 
-	private function where_task_id() {
+	private function where_task_id(): self {
 		$task_ids = isset( $this->query_params['task_id'] ) ? $this->query_params['task_id'] : false;
 
         if ( empty( $tasks ) ) {
@@ -884,7 +874,7 @@ class Task_List {
         return $this;
 	}
 
-	private function where_sub_task_id() {
+	private function where_sub_task_id(): self {
 		$sub_task_ids = isset( $this->query_params['sub_task_id'] ) ? $this->query_params['sub_task_id'] : false;
 
         if ( empty( $sub_tasks ) ) {
@@ -904,7 +894,7 @@ class Task_List {
         return $this;
 	}
 
-	private function limit() {
+	private function limit(): self {
 		global $wpdb;
 		$per_page = isset( $this->query_params['per_page'] ) ? $this->query_params['per_page'] : false;
 
@@ -918,7 +908,7 @@ class Task_List {
 		return $this;
 	}
 
-	private function orderby() {
+	private function orderby(): self {
         global $wpdb;
 
 		$tb_pj    = $wpdb->prefix . 'pm_boards';
@@ -952,7 +942,7 @@ class Task_List {
         return $this;
     }
 
-	private function get_offset() {
+	private function get_offset(): int {
 		$page = isset( $this->query_params['page'] ) ? $this->query_params['page'] : false;
 
 		$page   = empty( $page ) ? 1 : absint( $page );
@@ -962,7 +952,7 @@ class Task_List {
 		return $offset;
 	}
 
-	private function get_per_page() {
+	private function get_per_page(): int {
 
 		$per_page = isset( $this->query_params['per_page'] ) ? $this->query_params['per_page'] : false;
 
@@ -975,7 +965,7 @@ class Task_List {
 		return empty( $per_page ) ? 10 : (int) $per_page;
 	}
 
-	private function get() {
+	private function get(): self {
 		global $wpdb;
 		$id = isset( $this->query_params['id'] ) ? $this->query_params['id'] : false;
 
@@ -1001,7 +991,7 @@ class Task_List {
 		return $this;
 	}
 
-	private function set_table_name() {
+	private function set_table_name(): void {
 		$this->tb_project          = pm_tb_prefix() . 'pm_projects';
 		$this->tb_list             = pm_tb_prefix() . 'pm_boards';
 		$this->tb_task             = pm_tb_prefix() . 'pm_tasks';
